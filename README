@@ -1,0 +1,5 @@
+This is the SCIFIO plugin for reading images in ImageJ2/Fiji/... in the Elmitec format used for low-energy electron microscopy images (see http://www.elmitec.de), in particular in the U-view2002 software (http://www.elmitec.de/Components.php?Bereich=Software). An older version of the plugin appropiate for ImageJ1 can be found in my web page, http://surfmoss.iqfr.csic.es/en/2013-04-03-07-52-50/juan-de-la-figuera/tips-and-tricks).
+
+It is a format originally used for STM images (the full format name is UKSOFT2000, and has a .dat extension) in the electronics designed by Uwe Knipping. It is a binary dump in unsigned 16 bits with an initial header with the dimensions of the image and several optional parameters describing the adquisition settings. This plugin does not support, and is unlikely to support in the future, multi-image files.
+
+Juan de la Figuera, 10-2016.
