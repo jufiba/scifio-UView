@@ -1,20 +1,13 @@
-/*
- * #%L
- * SCIFIO tutorials for core and plugin use.
- * %%
- * Copyright (C) 2011 - 2016 Open Microscopy Environment:
- * 	- Board of Regents of the University of Wisconsin-Madison
- * 	- Glencoe Software, Inc.
- * 	- University of Dundee
- * %%
- * To the extent possible under law, the SCIFIO developers have waived
- * all copyright and related or neighboring rights to this tutorial code.
+/**
+ * Scifio-UView plugin. This plugin reads single images from the UKSOFT2000 format. This format is used by the 
+ * Elmitec camera adquisition program for their LEEM/PEEM line of instruments.
  * 
- * See the CC0 1.0 Universal license for details:
- * http://creativecommons.org/publicdomain/zero/1.0/
- * #L%
+ * It is a simple unsigned 16bit binary dump preceeded by a header with some experimental parameters and the size.
+ * For the record, it is the same format originally used in a Transputer electronics control unit for Scanning Tunneling
+ * Microcopy, from Uwe Knipping (who then moved to Elmitec).
+ *
+ * @author Juan de la Figuera
  */
-
 
 
 import io.scif.AbstractChecker;
@@ -56,16 +49,7 @@ import net.imagej.axis.Axes;
 
 import org.scijava.plugin.Plugin;
 
-/**
- * Scifio-UView plugin. This plugin reads single images from the UKSOFT2000 format. This format is used by the 
- * Elmitec camera adquisition program for their LEEM/PEEM line of instruments.
- * 
- * It is a simple unsigned 16bit binary dump preceeded by a header with some experimental parameters and the size.
- * For the record, it is the same format originally used in a Transputer electronics control unit for Scanning Tunneling
- * Microcopy, from Uwe Knipping (who then moved to Elmitec).
- *
- * @author Juan de la Figuera
- */
+
 
 public class UView_reader {
 	
