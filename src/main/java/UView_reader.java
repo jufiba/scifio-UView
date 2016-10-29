@@ -14,8 +14,6 @@ import io.scif.AbstractChecker;
 import io.scif.AbstractFormat;
 import io.scif.AbstractMetadata;
 import io.scif.AbstractParser;
-import io.scif.AbstractTranslator;
-import io.scif.AbstractWriter;
 import io.scif.ByteArrayPlane;
 import io.scif.ByteArrayReader;
 import io.scif.Field;
@@ -23,27 +21,12 @@ import io.scif.Format;
 import io.scif.FormatException;
 import io.scif.HasColorTable;
 import io.scif.ImageMetadata;
-import io.scif.Plane;
 import io.scif.SCIFIO;
 import io.scif.config.SCIFIOConfig;
-import io.scif.formats.ImageIOFormat.Metadata;
 import io.scif.io.RandomAccessInputStream;
-import io.scif.io.RandomAccessOutputStream;
-import io.scif.services.FormatService;
 import io.scif.util.FormatTools;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.ByteOrder;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.img.basictypeaccess.array.ShortArray;
-import net.imglib2.img.planar.PlanarImg;
 
 import net.imagej.axis.Axes;
 
@@ -129,7 +112,7 @@ public class UView_reader {
 				meta.createImageMetadata(1);	
 				final ImageMetadata iMeta = meta.get(0);
 				stream.order(true); // ByteOrder.LITTLE_ENDIAN
-				
+				long filelength=stream.length();
 				stream.seek(20);
 				int UKFH_size = stream.readUnsignedShort();
 				int UKFH_version = stream.readUnsignedShort();
@@ -140,6 +123,7 @@ public class UView_reader {
                 int UKFH_nimages = stream.readUnsignedShort();
     			iMeta.addAxis(Axes.X, UKFH_width);
     			iMeta.addAxis(Axes.Y, UKFH_height);
+    			//meta.setOffset(392);
     			log().debug("UView Plugin UKFileHeader info\n "+"size "+UKFH_size+"\n version "+UKFH_version+"\n bitsperpixel "+UKFH_bitsperpixel+"\n witdth "+UKFH_width+
     					"\n height "+UKFH_height+"\n nimages "+UKFH_nimages);
     			stream.seek(UKFH_size);
@@ -158,7 +142,8 @@ public class UView_reader {
     			int UKIH_leemdataversion= stream.readUnsignedShort();
     			log().debug("UView Plugin UKImageHeader info\n "+"size "+UKIH_size+"\n version "+UKIH_version+"\n ColorLow "+UKIH_colorlow+"\n ColorHigh "+UKIH_colorhigh+
     					"\n time "+UKIH_time+ "\n maskx "+UKIH_maskx+"\n masky "+UKIH_masky+"\n spin "+UKIH_spin+ "\n leemdataversion "+UKIH_leemdataversion);
-    			meta.setOffset(UKFH_size+UKIH_size+128); // Why the 128 extra offset?????
+    			//meta.setOffset(UKFH_size+UKIH_size); 
+    			meta.setOffset((int)filelength-2*UKFH_width*UKFH_height);
     			if (UKIH_version>4) {		
     				stream.seek(UKFH_size+28);
     				log().debug("UView Plugin LEEMDATA info\n"); 
