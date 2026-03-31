@@ -2,27 +2,92 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>io.scif</groupId>
-		<artifactId>pom-scifio</artifactId>
-		<version>10.0.0</version>
-		<relativePath />
-	</parent>
+<parent>
+  <groupId>org.scijava</groupId>
+  <artifactId>pom-scijava</artifactId>
+  <version>34.1.0</version>
+</parent>
 
 	<artifactId>scifio-uview</artifactId>
-
 	<name>SCIFIO UView Reader Plugin</name>
 	<description>Reading a file in the UKSOFT2000 format used in the Elmitec Uview LEEM/PEEM program.</description>
-
 	<properties>
 		<project.rootdir>${basedir}/..</project.rootdir>
-	</properties>
+        <main-class>UView_reader</main-class>
+        <package-name>io.scif</package-name>
+        <license.licenseName>cc0</license.licenseName>
+        <license.copyrightOwners>N/A</license.copyrightOwners>
+    </properties>
 
+	
+ <url>http://www.github.org/Jufiba</url>
+        <inceptionYear>2016</inceptionYear>
+        <organization>
+                <name>IQFR</name>
+                <url>http://www.iqfr.csic.es/</url>
+        </organization>
+       <licenses>
+        <license>
+                        <name>CC0 1.0 Universal License</name>
+                        <url>http://creativecommons.org/publicdomain/zero/1.0/</url>
+                        <distribution>repo</distribution>
+                </license>
+               </licenses>
+       
+       
+        <developers>
+                <developer>
+                        <id>jufiba</id>
+                        <name>Juan de la Figuera</name>
+                        <url>http://surfmoss.iqfr.csic.es</url>
+                        <roles>
+                                <role>founder</role>
+                                <role>lead</role>
+                                <role>developer</role>
+                                <role>debugger</role>
+                                <role>reviewer</role>
+                                <role>support</role>
+                                <role>maintainer</role>
+                        </roles>
+                </developer>
+        </developers>
+        <contributors>
+  <!--
+  NB: Need at least one element to override the parent.
+  See: https://issues.apache.org/jira/browse/MNG-5220
+  -->
+  <contributor>
+    <name>None</name>
+  </contributor>
+</contributors>
+
+<mailingLists>
+  <mailingList>
+    <name>Image.sc Forum</name>
+    <archive>https://forum.image.sc/</archive>
+  </mailingList>
+</mailingLists>
+
+<ciManagement>
+  <system>None</system>
+</ciManagement>
+
+<issueManagement>
+  <system>None</system>
+</issueManagement>
+
+<scm>
+        <connection>scm:git:ssh://github.com/Jufiba</connection>
+        <developerConnection>scm:git:ssh://github.com/Jufiba</developerConnection>
+        <url>https://github.com/Jufiba</url>
+    </scm>
+
+    
 	<repositories>
 		<!-- NB: for parent project, in case of partial checkout -->
 		<repository>
 			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
+			<url>https://maven.scijava.org/content/groups/public</url>
 		</repository>
 	</repositories>
 
@@ -32,5 +97,23 @@
 			<artifactId>scifio</artifactId>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.scijava</groupId>
+							<artifactId>scijava-common</artifactId>
+							<version>${scijava-common.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>
