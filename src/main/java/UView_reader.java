@@ -174,11 +174,7 @@ public class UView_reader {
 						int UKFH_MCPdiameterinpixels=stream.readUnsignedShort();
 						int UKFH_hbinning=stream.readUnsignedByte();
 						int UKFH_vbinning=stream.readUnsignedByte();
-						log().info("More info (v>7): camerabitsperpixel "+UKFH_camerabitsperpixel+" MCPDiam "+UKFH_MCPdiameterinpixels+
-								" binning "+UKFH_hbinning+"x"+UKFH_vbinning);
 					}
-					log().info("UView Plugin UKFileHeader info\n "+"size "+UKFH_size+"\n version "+UKFH_version+"\n bitsperpixel "+UKFH_bitsperpixel+"\n width "+UKFH_width+
-							"\n height "+UKFH_height+"\n nimages "+UKFH_nimages);
 					// attachedRecipeSize is always at absolute offset 46 in the file header
 					// (per spec: file header is 104 bytes fixed, attachedRecipeSize at offset 46)
 					int UKFH_attachedrecipesize;
@@ -199,35 +195,24 @@ public class UView_reader {
 					long UKIH_time= stream.readLong();
 					DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss Z");
 					String UKIH_date=formatter.format(new Date((UKIH_time - 116444736000000000L)/10000L ));
-					log().info(UKIH_date);
+					meta.getTable().put("Date", UKIH_date);
 					int UKIH_maskx = stream.readUnsignedShort();
 					int UKIH_masky = stream.readUnsignedShort();
 					stream.seek(stream.offset()+2); // skip RotateMask (2 bytes)
 					int UKIH_attachedmarkedsize=stream.readUnsignedShort();
 					int MARKUP_size=128*((UKIH_attachedmarkedsize/128)+1);
-					log().info("markup "+MARKUP_size);
 					int UKIH_spin = stream.readUnsignedShort();
 					int UKIH_leemdataversion= stream.readUnsignedShort();
-					log().info("UView Plugin UKImageHeader info\n "+"size "+UKIH_size+"\n version "+UKIH_version+
-							"\n ColorLow "+UKIH_colorlow+"\n ColorHigh "+UKIH_colorhigh+
-							"\n time "+UKIH_time+ "\n maskx "+UKIH_maskx+"\n masky "+UKIH_masky+
-							"\n spin "+UKIH_spin+ "\n leemdataversion "+UKIH_leemdataversion+" attachedmarkedsize "+UKIH_attachedmarkedsize);
-					log().info("Size of headers: Fileheader "+UKFH_size+" recipesize "+recipeBlockSize+
-							" Imageheader "+UKIH_size+" Markup "+MARKUP_size);
-					log().info("total offset: "+(UKFH_size+recipeBlockSize+UKIH_size+MARKUP_size));
-					log().info("theoretical offset: "+((int)filelength-2*UKFH_width*UKFH_height));
 
 					if (UKIH_version>4) {
 						// LEEMdata[239] is at offset 28 within the image header
 						stream.seek(UKFH_size + recipeBlockSize + 28);
-						log().info("UView Plugin LEEMDATA info\n");
 						int i=0;
 						int tag;
 						while (i<256) {
 							tag=stream.readUnsignedByte();
 							i++;
 							if (tag==255){
-								log().info("End of LEEMData "+tag+" "+i);
 								break;
 							} else {
 								switch (tag) {
@@ -240,108 +225,104 @@ public class UView_reader {
 									float UKLD_micrometery=stream.readFloat();
 									meta.setMicrometerX(UKLD_micrometerx);
 									meta.setMicrometerY(UKLD_micrometery);
-									log().info(" micrometerxy "+UKLD_micrometerx+","+UKLD_micrometery);
+									meta.getTable().put("MicrometerX", UKLD_micrometerx);
+									meta.getTable().put("MicrometerY", UKLD_micrometery);
 									i+=8;
 									break;
 								case 101:
 									String UKLD_fov=stream.readCString();
-									log().info(" fov "+UKLD_fov);
+									meta.getTable().put("FOV", UKLD_fov);
 									i+=UKLD_fov.length()+1;
 									break;
 								case 102:
 									float UKLD_varian0=stream.readFloat();
-									log().info(" varian0 "+UKLD_varian0);
+									meta.getTable().put("Varian1", UKLD_varian0);
 									i+=4;
 									break;
 								case 103:
 									float UKLD_varian1=stream.readFloat();
-									log().info(" varian1 "+UKLD_varian1);
+									meta.getTable().put("Varian2", UKLD_varian1);
 									i+=4;
 									break;
 								case 104:
 									float UKLD_camera_exposure=stream.readFloat();
-									log().info(" camera_exposure "+UKLD_camera_exposure);
+									meta.getTable().put("CameraExposure", UKLD_camera_exposure);
 									if (UKIH_leemdataversion>1) {
-										int b1=stream.readByte();
-										int b2=stream.readByte();
-										if (b1<0) {
-											log().info("sliding average");
-										} else if (b1==0) {
-											log().info("No average");
-										} else {
-											log().info("Average "+b2);
-										}
+										stream.readByte();
+										stream.readByte();
 										i+=2;
 									}
 									i+=4;
 									break;
 								case 105:
 									String UKLD_title=stream.readCString();
-									log().info(" title "+UKLD_title);
+									meta.getTable().put("Title", UKLD_title);
 									i+=UKLD_title.length()+1;
 									break;
 								case 106:
 									String UKLD_gauge1=stream.readCString();
 									String UKLD_gauge1units=stream.readCString();
 									float UKLD_gauge1value=stream.readFloat();
-									log().info(" Gauge1 "+UKLD_gauge1+" "+UKLD_gauge1value+UKLD_gauge1units);
+									meta.getTable().put(UKLD_gauge1 + " (" + UKLD_gauge1units + ")", UKLD_gauge1value);
 									i+=UKLD_gauge1.length()+1+UKLD_gauge1units.length()+1+4;
 									break;
 								case 107:
 									String UKLD_gauge2=stream.readCString();
 									String UKLD_gauge2units=stream.readCString();
 									float UKLD_gauge2value=stream.readFloat();
-									log().info(" Gauge2 "+UKLD_gauge2+" "+UKLD_gauge2value+UKLD_gauge2units);
+									meta.getTable().put(UKLD_gauge2 + " (" + UKLD_gauge2units + ")", UKLD_gauge2value);
 									i+=UKLD_gauge2.length()+1+UKLD_gauge2units.length()+1+4;
 									break;
 								case 108:
 									String UKLD_gauge3=stream.readCString();
 									String UKLD_gauge3units=stream.readCString();
 									float UKLD_gauge3value=stream.readFloat();
-									log().info(" Gauge3 "+UKLD_gauge3+" "+UKLD_gauge3value+UKLD_gauge3units);
+									meta.getTable().put(UKLD_gauge3 + " (" + UKLD_gauge3units + ")", UKLD_gauge3value);
 									i+=UKLD_gauge3.length()+1+UKLD_gauge3units.length()+1+4;
 									break;
 								case 108+1:
 									String UKLD_gauge4=stream.readCString();
 									String UKLD_gauge4units=stream.readCString();
 									float UKLD_gauge4value=stream.readFloat();
-									log().info(" Gauge4 "+UKLD_gauge4+" "+UKLD_gauge4value+UKLD_gauge4units);
+									meta.getTable().put(UKLD_gauge4 + " (" + UKLD_gauge4units + ")", UKLD_gauge4value);
 									i+=UKLD_gauge4.length()+1+UKLD_gauge4units.length()+1+4;
 									break;
 								case 110:
 									String UKLD_fovcal=stream.readCString();
 									float UKLD_fovcalvalue=stream.readFloat();
-									log().info(" FOV calibration "+UKLD_fovcal+" "+UKLD_fovcalvalue);
+									meta.getTable().put("FOVCalibration", UKLD_fovcalvalue);
+									meta.getTable().put("FOVCalibrationUnit", UKLD_fovcal);
 									i+=UKLD_fovcal.length()+1+4;
 									break;
 								case 111:
 									float UKLD_phi=stream.readFloat();
 									float UKLD_theta=stream.readFloat();
-									log().info(" Phi, Theta "+UKLD_phi+" "+UKLD_theta);
+									meta.getTable().put("Phi", UKLD_phi);
+									meta.getTable().put("Theta", UKLD_theta);
 									i+=8;
 									break;
 								case 115:
 									float UKLD_MCPscreenvoltage=stream.readFloat();
-									log().info(" MCP screen voltage "+UKLD_MCPscreenvoltage);
+									meta.getTable().put("MCPScreenVoltage", UKLD_MCPscreenvoltage);
 									i+=4;
 									break;
 								case 116:
 									float UKLD_MCPchannelplate=stream.readFloat();
-									log().info(" MCP channelplate "+UKLD_MCPchannelplate);
+									meta.getTable().put("MCPChannelPlate", UKLD_MCPchannelplate);
 									i+=4;
 									break;
 								default:
 									if (tag<100) {
 										String module=stream.readCString();
 										float module_reading=stream.readFloat();
-										log().info(" Module "+tag+" "+module+" "+module_reading);
+										meta.getTable().put(module, module_reading);
 										i+=module.length()+1+4;
 										break;
 									} else if (tag>128) {
 										tag=tag-128;
 										String module=stream.readCString();
 										float module_reading=stream.readFloat();
-										log().info(" Module* "+tag+" "+module+" "+module_reading);
+										meta.getTable().put(module, module_reading);
 										i+=module.length()+1+4;
 										break;
 									}
