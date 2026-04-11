@@ -9,7 +9,7 @@
 </parent>
 
 	<artifactId>scifio-uview</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<name>SCIFIO UView Reader Plugin</name>
 	<description>Reading a file in the UKSOFT2000 format used in the Elmitec Uview LEEM/PEEM program.</description>
 	<properties>
@@ -96,6 +96,10 @@
 		<dependency>
 			<groupId>io.scif</groupId>
 			<artifactId>scifio</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij</artifactId>
 		</dependency>
 	</dependencies>
 
