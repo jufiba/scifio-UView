@@ -34,36 +34,75 @@ public class UView_Folder_Reader implements PlugIn {
 		if (dir == null) return;
 
 		File folder = new File(dir);
-		File[] files = folder.listFiles((d, name) -> name.toLowerCase().endsWith(".dat"));
-		if (files == null || files.length == 0) {
+		File[] allFiles = folder.listFiles((d, name) -> name.toLowerCase().endsWith(".dat"));
+		if (allFiles == null || allFiles.length == 0) {
 			IJ.error("UView Folder Reader", "No .dat files found in:\n" + dir);
 			return;
 		}
-		Arrays.sort(files);
+		Arrays.sort(allFiles);
 
+		// --- options dialog ---
+		GenericDialog gd = new GenericDialog("UView Folder Reader");
+		gd.addStringField("File name contains:",  "",              20);
+		gd.addNumericField("Starting image:",       1,              0);
+		gd.addNumericField("Number of images:",     allFiles.length, 0);
+		gd.addNumericField("Increment:",            1,              0);
+		gd.showDialog();
+		if (gd.wasCanceled()) return;
+
+		String filter    =        gd.getNextString().trim();
+		int    startImg  = Math.max(1, (int) gd.getNextNumber());
+		int    numImages = Math.max(1, (int) gd.getNextNumber());
+		int    increment = Math.max(1, (int) gd.getNextNumber());
+
+		// apply filename filter
+		List<File> filtered = new ArrayList<>();
+		for (File f : allFiles)
+			if (filter.isEmpty() || f.getName().contains(filter))
+				filtered.add(f);
+
+		if (filtered.isEmpty()) {
+			IJ.error("UView Folder Reader", "No files match the filter \"" + filter + "\".");
+			return;
+		}
+
+		// apply range: starting image (1-based), count, increment
+		int from = startImg - 1;                          // 0-based
+		int to   = Math.min(from + numImages * increment, filtered.size());
+		List<File> selected = new ArrayList<>();
+		for (int i = from; i < to; i += increment)
+			selected.add(filtered.get(i));
+
+		if (selected.isEmpty()) {
+			IJ.error("UView Folder Reader", "No files in the specified range.");
+			return;
+		}
+
+		// --- read selected files ---
 		ImageStack stack = null;
 		int width = 0, height = 0;
 		int skipped = 0;
 
-		IJ.showStatus("Reading " + files.length + " UView files...");
+		IJ.showStatus("Reading " + selected.size() + " UView files...");
 
-		for (int n = 0; n < files.length; n++) {
-			IJ.showProgress(n, files.length);
+		for (int n = 0; n < selected.size(); n++) {
+			IJ.showProgress(n, selected.size());
+			File f = selected.get(n);
 			try {
-				FrameData frame = readDat(files[n]);
+				FrameData frame = readDat(f);
 				if (stack == null) {
 					width  = frame.width;
 					height = frame.height;
 					stack  = new ImageStack(width, height);
 				} else if (frame.width != width || frame.height != height) {
-					IJ.log("Skipped (different size): " + files[n].getName());
+					IJ.log("Skipped (different size): " + f.getName());
 					skipped++;
 					continue;
 				}
 				ShortProcessor sp = new ShortProcessor(width, height, frame.pixels, null);
-				stack.addSlice(files[n].getName() + "\n" + frame.label, sp);
+				stack.addSlice(f.getName() + "\n" + frame.label, sp);
 			} catch (Exception e) {
-				IJ.log("Skipped (read error): " + files[n].getName() + " — " + e.getMessage());
+				IJ.log("Skipped (read error): " + f.getName() + " — " + e.getMessage());
 				skipped++;
 			}
 		}
