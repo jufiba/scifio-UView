@@ -141,6 +141,10 @@ public class UView_reader {
 				iMeta.setThumbnail(false);
 				iMeta.setPixelType(FormatTools.UINT16);
 				iMeta.setLittleEndian(true);
+
+				// Copy format-level table into image-level table so Fiji's
+				// Show Info and getProperty() can access the fields.
+				iMeta.getTable().putAll(getTable());
 			}
 		}
 
@@ -200,22 +204,23 @@ public class UView_reader {
 					int UKIH_masky = stream.readUnsignedShort();
 					stream.seek(stream.offset()+2); // skip RotateMask (2 bytes)
 					int UKIH_attachedmarkedsize=stream.readUnsignedShort();
-					int MARKUP_size=128*((UKIH_attachedmarkedsize/128)+1);
+					int MARKUP_size= (UKIH_attachedmarkedsize > 0) ? 128*((UKIH_attachedmarkedsize/128)+1) : 0;
 					int UKIH_spin = stream.readUnsignedShort();
 					int UKIH_leemdataversion= stream.readUnsignedShort();
 
-					if (UKIH_version>4) {
-						// LEEMdata[239] is at offset 28 within the image header
-						stream.seek(UKFH_size + recipeBlockSize + 28);
+					// When LEEMdataVersion > 2 its value IS the size of the external LEEM data block,
+					// located after the markup block. Values 1 and 2 indicate no external block.
+					if (UKIH_leemdataversion > 2) {
+						stream.seek(UKFH_size + recipeBlockSize + UKIH_size + MARKUP_size);
 						int i=0;
+						int rawTag;
 						int tag;
-						while (i<256) {
-							tag=stream.readUnsignedByte();
+						while (i < UKIH_leemdataversion) {
+							rawTag=stream.readUnsignedByte();
 							i++;
-							if (tag==255){
-								break;
-							} else {
-								switch (tag) {
+							if (rawTag==0xFF) break;
+							tag = rawTag & 0x7F; // strip "hidden" bit (0x80 = recorded but not shown on image)
+							switch (tag) {
 								case 16:
 									stream.readUnsignedByte();
 									i+=1;
@@ -313,22 +318,23 @@ public class UView_reader {
 									break;
 								default:
 									if (tag<100) {
-										String module=stream.readCString();
+										// Format: name + unit_digit(0-9) + 0x00 + float(4)
+										// Unit codes: 0=none,1=V,2=mA,3=A,4=C,5=K,6=mV,7=pA,8=nA,9=uA
+										String nameAndUnit=stream.readCString();
 										float module_reading=stream.readFloat();
-										meta.getTable().put(module, module_reading);
-										i+=module.length()+1+4;
-										break;
-									} else if (tag>128) {
-										tag=tag-128;
-										String module=stream.readCString();
-										float module_reading=stream.readFloat();
-										meta.getTable().put(module, module_reading);
-										i+=module.length()+1+4;
+										if (nameAndUnit.length() > 0) {
+											char unitCode=nameAndUnit.charAt(nameAndUnit.length()-1);
+											String modName=nameAndUnit.substring(0, nameAndUnit.length()-1);
+											String[] unitNames={"","V","mA","A","\u00b0C","K","mV","pA","nA","\u00b5A"};
+											String unit=(unitCode>='0' && unitCode<='9') ? unitNames[unitCode-'0'] : "";
+											String key=unit.isEmpty() ? modName : modName+" ("+unit+")";
+											meta.getTable().put(key, module_reading);
+										}
+										i+=nameAndUnit.length()+1+4;
 										break;
 									}
 
 								}
-							}
 						}
 					}
 				}
